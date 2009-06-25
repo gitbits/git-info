@@ -168,19 +168,19 @@ do_git_info () {
     GIT_DIR="$git_dir" git remote -v > "$TEMPFILE"
     if [ -s "$TEMPFILE"  ]; then
         echo "Remote Repositories:"
-	sed 's/^/	/' "$TEMPFILE"
+        sed 's/^/	/' "$TEMPFILE"
     fi
 
     GIT_DIR="$git_dir" git branch -r > "$TEMPFILE"
     if [ -s "$TEMPFILE"  ]; then
         echo "Remote Branches:"
-	sed 's/^/	/' "$TEMPFILE"
+        sed 's/^/	/' "$TEMPFILE"
     fi
 
     GIT_DIR="$git_dir" git branch > "$TEMPFILE"
     if [ -s "$TEMPFILE"  ]; then
         echo "Local Branches:"
-	sed 's/^/	/' "$TEMPFILE"
+        sed 's/^/	/' "$TEMPFILE"
     fi
 
     echo "Repository Configuration:"
