@@ -1,0 +1,230 @@
+#!/bin/sh
+#
+# git-info - shows information about a Git repository a la `svn info'
+#
+# How to set up:
+#     $ install -m 755 git-pager ~/bin/
+#     $ install -m 755 git-info ~/bin/
+#     $ git config --global alias.pager '!$HOME/bin/git-pager "$@"'
+#     $ git config --global alias.info '!$HOME/bin/git-info "$@"'
+#
+# How to use:
+#     $ git info
+#     $ git info ~/src/somewhere/somefile
+#     $ git info some/relative/file_or_directory
+#     $ git info ~/repos/something.git
+#
+# Copyright (c) 2009 Akinori MUSHA
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+PAGINATE=t
+
+main () {
+    local error path file first=t opt OPTIND OPTARG ret
+
+    while error="$(getopts 'p-:' opt 2>&1)"; do
+        case "$opt" in
+            p)
+                PAGINATE=t
+                ;;
+            -)
+                case "$OPTARG" in
+                    paginate)
+                        PAGINATE=t
+                        ;;
+                    no-pager)
+                        PAGINATE=
+                        ;;
+                    *)
+                        die "Illegal option --$OPTARG"
+                        ;;
+                esac
+                ;;
+            *)
+                die "$error"
+                ;;
+        esac
+    done
+
+    shift $(($OPTIND - 1))
+
+    case "$#" in
+        1)
+            ;;
+        0)
+            if [ -n "$GIT_DIR" ]; then
+                set -- "$GIT_DIR"
+            else
+                set -- .
+            fi
+            ;;
+        *)
+            die "Too many arguments"
+            ;;
+    esac
+
+    git_info "$1"
+
+    ret=$?
+
+    finalize
+
+    return $ret
+}
+
+git_info () {
+    local path="$1" dir relpath root git_dir
+
+    if [ -d "$path" ]; then
+        dir="$(cd "$path" && pwd)" || die "$path: No such file or directory"
+        case "$path" in
+            *.git)
+                git_dir="$dir"
+                ;;
+        esac
+    elif [ -f "$path" ]; then
+        dir="$(cd "$(dirname "$path")" && pwd)" || die "$path: No such file or directory"
+        relpath="$(basename "$path")"
+    else
+        die "$path: No such file or directory"
+    fi
+
+    if [ -n "$git_dir" ]; then
+        dir=
+        relpath=
+    else
+        root="$(
+            cd "$dir" || exit 1
+            while [ ! -d .git ]; do
+                [ "$(pwd)" = / ] && exit 1
+                cd ..
+            done
+            [ ! -d .git ] && exit 1
+            pwd
+        )" || die "Not a git repository."
+        git_dir="$root/.git"
+        if [ "$dir" = "$root" ]; then
+            relpath=.
+        elif [ -n "$relpath" ]; then
+            relpath="${dir#"$root/"}/$relpath"
+        else
+            relpath="${dir#"$root/"}"
+        fi
+    fi
+
+    set -- "$git_dir"
+    if [ -n "$relpath" ]; then
+        set -- "$@" "$relpath"
+    fi
+
+    if [ -n "$PAGINATE" ]; then
+        do_git_info "$@" | git-pager
+    else
+        do_git_info "$@"
+    fi
+}
+
+do_git_info () {
+    local git_dir="$1" relpath="$2" root line field
+
+    shift
+
+    echo "Repository Path: $git_dir"
+
+    if [ $# -gt 0 ]; then
+        root="$(dirname "$git_dir")"
+        if  [ "$relpath" = . ]; then
+            echo "Path: $root"
+        else
+            echo "Path: $root/$relpath"
+        fi
+    fi
+
+    maketemp
+
+    GIT_DIR="$git_dir" git remote -v > "$TEMPFILE"
+    if [ -s "$TEMPFILE"  ]; then
+        echo "Remote Repositories:"
+	sed 's/^/	/' "$TEMPFILE"
+    fi
+
+    GIT_DIR="$git_dir" git branch -r > "$TEMPFILE"
+    if [ -s "$TEMPFILE"  ]; then
+        echo "Remote Branches:"
+	sed 's/^/	/' "$TEMPFILE"
+    fi
+
+    GIT_DIR="$git_dir" git branch > "$TEMPFILE"
+    if [ -s "$TEMPFILE"  ]; then
+        echo "Local Branches:"
+	sed 's/^/	/' "$TEMPFILE"
+    fi
+
+    echo "Repository Configuration:"
+    sed 's/^/	/' .git/config
+
+    (cd "$root" && GIT_DIR="$git_dir" git log --max-count=1 "$@") | {
+        while read field line; do
+            case "$field" in
+                commit)
+                    field='Commit ID:'
+                    ;;
+                *:)
+                    ;;
+                '')
+                    break
+                    ;;
+            esac
+            echo "Last Changed $field $line"
+        done
+        cat > "$TEMPFILE"
+    }
+    echo "Last Changed Log:"
+    sed 's/^    /	/' "$TEMPFILE"
+}
+
+die () {
+    [ "$#" -gt 0 ] && echo "$0: $@" >&2
+    finalize
+    exit 1
+}
+
+TEMPFILE=
+
+maketemp () {
+    if [ -z "$TEMPFILE" ]; then
+        TEMPFILE="$(mktemp /tmp/git-info.XXXXXX)" || die
+        trap "finalize; exit 130" 1 2 3 15
+    fi
+}
+
+finalize () {
+    if [ -n "$TEMPFILE" ]; then
+        rm -f "$TEMPFILE"
+    fi
+}
+
+main "$@"
