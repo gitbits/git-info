@@ -43,9 +43,9 @@
 PAGINATE=t
 
 main () {
-    local error path file first=t opt OPTIND OPTARG ret
+    local path file first=t opt OPTIND OPTARG ret
 
-    while error="$(getopts 'p-:' opt 2>&1)"; do
+    while getopts 'p-:' opt; do
         case "$opt" in
             p)
                 PAGINATE=t
@@ -64,7 +64,8 @@ main () {
                 esac
                 ;;
             *)
-                die "$error"
+                echo "Usage: $0 [-p|--paginate|--no-pager] [path]" >&2
+                die
                 ;;
         esac
     done
