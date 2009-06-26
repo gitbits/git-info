@@ -124,7 +124,6 @@ git_info () {
                 [ "$(pwd)" = / ] && exit 1
                 cd ..
             done
-            [ ! -d .git ] && exit 1
             pwd
         )" || die "Not a git repository."
         git_dir="$root/.git"
