@@ -117,6 +117,9 @@ git_info () {
     if [ -n "$git_dir" ]; then
         dir=
         relpath=
+    elif case "$dir" in ?*.git) [ -d "$dir/objects" -a -d "$dir/refs" ] ;; *) false ;; esac; then
+        git_dir="$dir"
+        relpath=
     else
         root="$(
             cd "$dir" || exit 1
