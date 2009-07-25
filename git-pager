@@ -35,4 +35,4 @@
 : ${GIT_PAGER:="$(git config core.pager)"}
 : ${GIT_PAGER:="${PAGER:-less}"}
 
-LESS="${LESS-FRSX}" exec $GIT_PAGER "$@"
+LESS="${LESS-FRSX}" exec /bin/sh -c "$GIT_PAGER \"\$@\"" . "$@"
