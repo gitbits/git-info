@@ -100,7 +100,7 @@ git_info () {
     local path="$1" dir relpath root git_dir
 
     if [ -d "$path" ]; then
-        dir="$(cd "$path" && pwd)" || die "$path: Cannot cd to the directory"
+        dir="$(cd -P "$path" && pwd)" || die "$path: Cannot cd to the directory"
         case "$path" in
             *.git)
                 git_dir="$dir"
@@ -108,7 +108,7 @@ git_info () {
         esac
     elif [ -f "$path" ]; then
         dir="$(dirname "$path")"
-        dir="$(cd "$dir" && pwd)" || die "$dir: Cannot cd to the directory"
+        dir="$(cd -P "$dir" && pwd)" || die "$dir: Cannot cd to the directory"
         relpath="$(basename "$path")"
     else
         die "$path: No such file or directory"
