@@ -4,9 +4,9 @@ git-info and friends
 Sinopsys
 --------
 
-git-info - shows information about a Git repository a la `svn info'
-git-editor - invokes the editor that Git would pick
-git-pager - invokes the pager that Git would pick
+* git-info - shows information about a Git repository a la `svn info'
+* git-editor - invokes the editor that Git would pick
+* git-pager - invokes the pager that Git would pick
 
 How to set up
 -------------
