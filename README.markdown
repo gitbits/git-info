@@ -1,7 +1,7 @@
 git-info and friends
 ====================
 
-Sinopsys
+Synopsis
 --------
 
 * git-info - shows information about a Git repository a la `svn info'
