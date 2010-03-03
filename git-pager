@@ -4,7 +4,7 @@
 #
 # How to set up:
 #     $ install -m 755 git-pager ~/bin/
-#     $ git config --global alias.pager '!$HOME/bin/git-pager "$@"'
+#     $ git config --global alias.pager '!$HOME/bin/git-pager'
 #
 # Copyright (c) 2009 Akinori MUSHA
 #

@@ -4,7 +4,7 @@
 #
 # How to set up:
 #     $ install -m 755 git-editor ~/bin/
-#     $ git config --global alias.editor '!$HOME/bin/git-editor "$@"'
+#     $ git config --global alias.editor '!$HOME/bin/git-editor'
 #
 # Copyright (c) 2009 Akinori MUSHA
 #

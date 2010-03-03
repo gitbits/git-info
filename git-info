@@ -5,8 +5,8 @@
 # How to set up:
 #     $ install -m 755 git-pager ~/bin/
 #     $ install -m 755 git-info ~/bin/
-#     $ git config --global alias.pager '!$HOME/bin/git-pager "$@"'
-#     $ git config --global alias.info '!$HOME/bin/git-info "$@"'
+#     $ git config --global alias.pager '!$HOME/bin/git-pager'
+#     $ git config --global alias.info '!$HOME/bin/git-info'
 #
 # How to use:
 #     $ git info
