@@ -35,6 +35,7 @@
 #
 
 PAGINATE=t
+COLOR=
 
 main () {
     local path file first=t opt OPTIND OPTARG ret
@@ -52,19 +53,27 @@ main () {
                     no-pager)
                         PAGINATE=
                         ;;
+                    color)
+                        COLOR=always
+                        ;;
+                    color\=*)
+                        COLOR="${OPTARG#color=}"
+                        ;;
                     *)
                         die "Illegal option --$OPTARG"
                         ;;
                 esac
                 ;;
             *)
-                echo "Usage: $0 [-p|--paginate|--no-pager] [path]" >&2
+                echo "Usage: $0 [-p|--paginate|--no-pager|--color[=<when>]] [path]" >&2
                 die
                 ;;
         esac
     done
 
     shift $(($OPTIND - 1))
+
+    initialize_colors
 
     case "$#" in
         1)
@@ -88,6 +97,61 @@ main () {
     finalize
 
     return $ret
+}
+
+initialize_colors () {
+    if [ -z "$COLOR" ]; then
+        if git config --get-colorbool color.info; then
+            COLOR=always
+        else
+            COLOR=never
+        fi
+    fi
+
+    case "$COLOR" in
+        always|never)
+            COLOR_BRANCH=$COLOR
+            ;;
+        auto)
+            if git config --get-colorbool color.branch; then
+                COLOR_BRANCH=always
+            else
+                COLOR_BRANCH=never
+            fi
+            ;;
+        *)
+            die "option \`color' expects \"always\", \"auto\", or \"never\""
+            ;;
+    esac
+
+    if [ "$COLOR" = always ]; then
+        REMOTE_COLOR="$(get_color color.info.remote color.branch.remote red)"
+        LOCAL_COLOR="$(get_color color.info.local color.branch.local green)"
+        PATH_COLOR="$(get_color color.info.path '' 'bold')"
+        REPOSITORY_COLOR="$(get_color color.info.repository '' 'bold')"
+        ID_COLOR="$(get_color color.info.id '' 'yellow')"
+        RESET_COLOR="$(git config --get-color '' '')"
+    else
+        REMOTE_COLOR=
+        LOCAL_COLOR=
+        PATH_COLOR=
+        REPOSITORY_COLOR=
+        ID_COLOR=
+        RESET_COLOR=
+    fi
+}
+
+get_color () {
+    local key1="$1" key2="$2" fb="$3"
+    local color="$(git config --get-color "$key1" '')"
+    case "$color" in
+        '[m'|'')
+            git config --get-color "$key2" "$fb"
+            ;;
+        *)
+            printf '%s' "$color"
+            ;;
+    esac
 }
 
 git_info () {
@@ -146,18 +210,18 @@ git_info () {
 }
 
 do_git_info () {
-    local git_dir="$1" relpath="$2" root line field
+    local git_dir="$1" relpath="$2" root line field color reset
 
     shift
 
-    echo "Repository Path: $git_dir"
+    echo "Repository Path: $PATH_COLOR$git_dir$RESET_COLOR"
 
     if [ $# -gt 0 ]; then
         root="$(dirname "$git_dir")"
         if  [ "$relpath" = . ]; then
-            echo "Path: $root"
+            echo "Path: $PATH_COLOR$root$RESET_COLOR"
         else
-            echo "Path: $root/$relpath"
+            echo "Path: $PATH_COLOR$root/$relpath$RESET_COLOR"
         fi
     fi
 
@@ -166,29 +230,41 @@ do_git_info () {
     GIT_DIR="$git_dir" git remote -v > "$TEMPFILE"
     if [ -s "$TEMPFILE"  ]; then
         echo "Remote Repositories:"
-        sed 's/^/	/' "$TEMPFILE"
+        sed -e "s/^\([^ 	]\{1,\}\)\([ 	]\{1,\}\)\([^ 	]\{1,\}\)/$REMOTE_COLOR\1$RESET_COLOR\2$REPOSITORY_COLOR\3$RESET_COLOR/" \
+            -e 's/^/	/' \
+            "$TEMPFILE"
     fi
 
-    GIT_DIR="$git_dir" git branch -r > "$TEMPFILE"
+    GIT_DIR="$git_dir" git branch -r --color=$COLOR_BRANCH > "$TEMPFILE"
     if [ -s "$TEMPFILE"  ]; then
         echo "Remote Branches:"
-        sed 's/^/	/' "$TEMPFILE"
+        sed -e "s/\([ 	]\{1,\}->[ 	]\{1,\}\)\([^ 	]\{1,\}\)/\1$REMOTE_COLOR\2$RESET_COLOR/" \
+            -e 's/^ */	/' "$TEMPFILE"
     fi
 
-    GIT_DIR="$git_dir" git branch > "$TEMPFILE"
+    GIT_DIR="$git_dir" git branch --color=$COLOR_BRANCH > "$TEMPFILE"
     if [ -s "$TEMPFILE"  ]; then
         echo "Local Branches:"
         sed 's/^/	/' "$TEMPFILE"
     fi
 
     echo "Repository Configuration:"
-    sed 's/^/	/' "$git_dir"/config
+    sed -e "s/^\(\[remote \"\)\([^\"]\{1,\}\)\(\"\]\)$/\1$REMOTE_COLOR\2$RESET_COLOR\3/" \
+        -e "s/^\([ 	]*remote[ 	]*=[ 	]*\"\{0,1\}\)\([^\" 	]\{1,\}\)\(\"\{0,1\}[ 	]*\)$/\1$REMOTE_COLOR\2$RESET_COLOR\3/" \
+        -e "s/^\(\[branch \"\)\([^\"]\{1,\}\)\(\"\]\)$/\1$LOCAL_COLOR\2$RESET_COLOR\3/" \
+        -e "s/^\([ 	]*url[ 	]*=[ 	]*\"\{0,1\}\)\([^\" 	]\{1,\}\)\(\"\{0,1\}[ 	]*\)$/\1$REPOSITORY_COLOR\2$RESET_COLOR\3/" \
+        -e 's/^/	/' \
+        "$git_dir"/config
 
     (cd "$root" && GIT_DIR="$git_dir" git log --max-count=1 "$@") | {
         while read field line; do
+            color=
+            reset=
             case "$field" in
                 commit)
                     field='Commit ID:'
+                    color="$ID_COLOR"
+                    reset="$RESET_COLOR"
                     ;;
                 *:)
                     ;;
@@ -196,7 +272,7 @@ do_git_info () {
                     break
                     ;;
             esac
-            echo "Last Changed $field $line"
+            echo "Last Changed $field $color$line$reset"
         done
         cat > "$TEMPFILE"
     }

@@ -32,8 +32,8 @@ Sample output
 		origin	git@github.com:knu/git-info.git (fetch)
 		origin	git@github.com:knu/git-info.git (push)
 	Remote Branches:
-		  origin/HEAD -> origin/master
-		  origin/master
+		origin/HEAD -> origin/master
+		origin/master
 	Local Branches:
 		* master
 	Repository Configuration:
