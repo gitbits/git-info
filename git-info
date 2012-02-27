@@ -2,19 +2,13 @@
 #
 # git-info - shows information about a Git repository a la `svn info'
 #
-# How to set up:
-#     $ install -m 755 git-pager ~/bin/
-#     $ install -m 755 git-info ~/bin/
-#     $ git config --global alias.pager '!$HOME/bin/git-pager'
-#     $ git config --global alias.info '!$HOME/bin/git-info'
-#
 # How to use:
 #     $ git info
 #     $ git info ~/src/somewhere/somefile
 #     $ git info some/relative/file_or_directory
 #     $ git info ~/repos/something.git
 #
-# Copyright (c) 2009 Akinori MUSHA
+# Copyright (c) 2009, 2012 Akinori MUSHA
 #
 # All rights reserved.
 #
