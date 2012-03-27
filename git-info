@@ -257,7 +257,7 @@ do_git_info () {
         "$git_dir"/config
 
     (cd "$root" && GIT_DIR="$git_dir" git log --max-count=1 "$@") | {
-        while read field line; do
+        while read -r field line; do
             color=
             reset=
             case "$field" in
