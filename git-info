@@ -38,7 +38,7 @@ PAGINATE=t
 COLOR=
 
 main () {
-    local path file first=t opt OPTIND OPTARG ret
+    local path file first=t opt OPTIND=1 ret
 
     while getopts 'p-:' opt; do
         case "$opt" in
