@@ -278,6 +278,8 @@ do_git_info () {
     }
     echo "Last Changed Log:"
     sed 's/^    /	/' "$TEMPFILE"
+
+    finalize
 }
 
 die () {
