@@ -8,7 +8,7 @@
 #     $ git info some/relative/file_or_directory
 #     $ git info ~/repos/something.git
 #
-# Copyright (c) 2009, 2012 Akinori MUSHA
+# Copyright (c) 2009, 2012, 2013 Akinori MUSHA
 #
 # All rights reserved.
 #
@@ -91,12 +91,6 @@ main () {
     esac
 
     git_info "$1"
-
-    ret=$?
-
-    finalize
-
-    return $ret
 }
 
 initialize_colors () {
