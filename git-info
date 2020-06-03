@@ -175,7 +175,7 @@ git_info () {
     else
         root="$(
             cd "$dir" || exit 1
-            while [ ! -d .git ]; do
+            while [ ! -e .git ]; do
                 [ "$(pwd)" = / ] && exit 1
                 cd ..
             done
@@ -243,12 +243,59 @@ do_git_info () {
     fi
 
     echo "Repository Configuration:"
-    sed -e "s/^\(\[remote \"\)\([^\"]\{1,\}\)\(\"\]\)$/\1$REMOTE_COLOR\2$RESET_COLOR\3/" \
-        -e "s/^\([ 	]*remote[ 	]*=[ 	]*\"\{0,1\}\)\([^\" 	]\{1,\}\)\(\"\{0,1\}[ 	]*\)$/\1$REMOTE_COLOR\2$RESET_COLOR\3/" \
-        -e "s/^\(\[branch \"\)\([^\"]\{1,\}\)\(\"\]\)$/\1$LOCAL_COLOR\2$RESET_COLOR\3/" \
-        -e "s/^\([ 	]*url[ 	]*=[ 	]*\"\{0,1\}\)\([^\" 	]\{1,\}\)\(\"\{0,1\}[ 	]*\)$/\1$REPOSITORY_COLOR\2$RESET_COLOR\3/" \
-        -e 's/^/	/' \
-        "$git_dir"/config
+    git config --local --list | sort | {
+        prev_section=
+        prev_subsection=
+        while read line; do
+            case "$line" in
+                (*=*)
+                    lhs=$(expr "$line" : '\([^=]\{1,\}\)')
+                    rhs=$(expr "$line" : '[^=]\{1,\}=\(.*\)')
+                    case "$lhs" in
+                        (?*.?*.?*)
+                            section=$(expr "$lhs" : '\([^.]\{1,\}\)')
+                            subsection=$(expr "$lhs" : '[^.]\{1,\}\.\(.\{1,\}\)\.')
+                            key=$(expr "$lhs" : '[^.]\{1,\}\..\{1,\}\.\([^.]\{0,\}\)$')
+                            if [ "$section" != "$prev_section" -o "$subsection" != "$prev_subsection" ]; then
+                                prev_section=$section
+                                prev_subsection=$subsection
+                                case "$section" in
+                                    (remote)
+                                        subsection=$REMOTE_COLOR$subsection$RESET_COLOR
+                                        ;;
+                                    (branch)
+                                        subsection=$LOCAL_COLOR$subsection$RESET_COLOR
+                                esac
+                                printf "\t[%s \"%s\"]\n" "$section" "$subsection"
+                            fi
+                            case "$section" in
+                                (remote)
+                                    if [ "$key" = url ]; then
+                                        rhs=$REPOSITORY_COLOR$rhs$RESET_COLOR
+                                    fi
+                                    ;;
+                                (branch)
+                                    if [ "$key" = remote ]; then
+                                        rhs=$REMOTE_COLOR$rhs$RESET_COLOR
+                                    fi
+                            esac
+                            printf "\t\t%s = %s\n" "$key" "$rhs"
+                            ;;
+                        (?*.?*)
+                            section=$(expr "$lhs" : '\([^.]\{1,\}\)')
+                            key=$(expr "$lhs" : '[^.]\{1,\}\.\([^.]\{1,\}\)$')
+                            if [ "$section" != "$prev_section" -o -n "$prev_subsection" ]; then
+                                prev_section=$section
+                                prev_subsection=
+                                printf "\t[%s]\n" "$section"
+                            fi
+                            printf "\t\t$key = $rhs\n"
+                            ;;
+                        (*)
+                    esac
+            esac
+        done
+    }
 
     (cd "$root" && GIT_DIR="$git_dir" git log --max-count=1 "$@") | {
         while read -r field line; do
