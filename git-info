@@ -8,7 +8,7 @@
 #     $ git info some/relative/file_or_directory
 #     $ git info ~/repos/something.git
 #
-# Copyright (c) 2009, 2012, 2013 Akinori MUSHA
+# Copyright (c) 2009, 2012, 2013, 2020 Akinori MUSHA
 #
 # All rights reserved.
 #
@@ -124,7 +124,7 @@ initialize_colors () {
         PATH_COLOR="$(get_color color.info.path '' 'bold')"
         REPOSITORY_COLOR="$(get_color color.info.repository '' 'bold')"
         ID_COLOR="$(get_color color.info.id '' 'yellow')"
-        RESET_COLOR="$(git config --get-color '' '')"
+        RESET_COLOR=$(printf "\e[m")
     else
         REMOTE_COLOR=
         LOCAL_COLOR=
