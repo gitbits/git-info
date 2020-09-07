@@ -124,7 +124,7 @@ initialize_colors () {
         PATH_COLOR="$(get_color color.info.path '' 'bold')"
         REPOSITORY_COLOR="$(get_color color.info.repository '' 'bold')"
         ID_COLOR="$(get_color color.info.id '' 'yellow')"
-        RESET_COLOR=$(printf "\e[m")
+        RESET_COLOR=$(printf "\033[m")
     else
         REMOTE_COLOR=
         LOCAL_COLOR=
