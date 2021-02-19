@@ -8,7 +8,7 @@
 #     $ git info some/relative/file_or_directory
 #     $ git info ~/repos/something.git
 #
-# Copyright (c) 2009, 2012, 2013, 2020 Akinori MUSHA
+# Copyright (c) 2009-2021 Akinori MUSHA
 #
 # All rights reserved.
 #
@@ -34,25 +34,15 @@
 # SUCH DAMAGE.
 #
 
-PAGINATE=t
 COLOR=
 
 main () {
     local path file first=t opt OPTIND=1 ret
 
-    while getopts 'p-:' opt; do
+    while getopts '-:' opt; do
         case "$opt" in
-            p)
-                PAGINATE=t
-                ;;
             -)
                 case "$OPTARG" in
-                    paginate)
-                        PAGINATE=t
-                        ;;
-                    no-pager)
-                        PAGINATE=
-                        ;;
                     color)
                         COLOR=always
                         ;;
@@ -65,7 +55,7 @@ main () {
                 esac
                 ;;
             *)
-                echo "Usage: $0 [-p|--paginate|--no-pager|--color[=<when>]] [path]" >&2
+                echo "Usage: $0 [--color[=<when>]] [path]" >&2
                 die
                 ;;
         esac
@@ -196,11 +186,7 @@ git_info () {
         set -- "$@" "$relpath"
     fi
 
-    if [ -n "$PAGINATE" ]; then
-        do_git_info "$@" | git-pager
-    else
-        do_git_info "$@"
-    fi
+    do_git_info "$@"
 }
 
 do_git_info () {
