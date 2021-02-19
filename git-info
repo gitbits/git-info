@@ -37,31 +37,36 @@
 COLOR=
 
 main () {
-    local path file first=t opt OPTIND=1 ret
+    local opt
+    local OPTS_SPEC="\
+$0 [<options>] [<path>]
 
-    while getopts '-:' opt; do
-        case "$opt" in
-            -)
-                case "$OPTARG" in
-                    color)
-                        COLOR=always
-                        ;;
-                    color\=*)
-                        COLOR="${OPTARG#color=}"
-                        ;;
-                    *)
-                        die "Illegal option --$OPTARG"
-                        ;;
-                esac
+$0 shows information about a Git repository.
+--
+h,help     show the help
+color?when show colored output (always|never|auto)
+"
+    eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt --stuck-long -- "$@" || echo exit $?)"
+
+    while [ $# -gt 0 ]; do
+	opt="$1"
+	shift
+
+	case "$opt" in
+	    --color)
+                COLOR=always
                 ;;
-            *)
-                echo "Usage: $0 [--color[=<when>]] [path]" >&2
-                die
+            --color\=*)
+                COLOR="${opt#*=}"
+                ;;
+	    --)
+		break
+		;;
+	    *)
+		die "Unexpected option: $opt"
                 ;;
         esac
     done
-
-    shift $(($OPTIND - 1))
 
     initialize_colors
 
