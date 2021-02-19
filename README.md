@@ -1,12 +1,10 @@
-git-info and friends
-====================
+git-info
+========
 
 Synopsis
 --------
 
 * git-info - shows information about a Git repository a la `svn info'
-* git-editor - invokes the editor that Git would pick
-* git-pager - invokes the pager that Git would pick
 
 How to set up
 -------------
@@ -57,7 +55,7 @@ Sample output
 Author
 ------
 
-Copyright (c) 2009, 2012 Akinori MUSHA.
+Copyright (c) 2009-2021 Akinori MUSHA.
 
 Licensed under the 2-clause BSD license.  See `LICENSE.txt` for
 further details.
