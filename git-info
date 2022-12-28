@@ -234,7 +234,7 @@ do_git_info () {
     fi
 
     echo "Repository Configuration:"
-    git config --local --list | sort | {
+    GIT_DIR="$git_dir" git config --local --list | sort | {
         prev_section=
         prev_subsection=
         while read line; do
