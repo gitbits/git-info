@@ -55,7 +55,7 @@ Sample output
 Author
 ------
 
-Copyright (c) 2009-2021 Akinori MUSHA.
+Copyright (c) 2009-2022 Akinori MUSHA.
 
 Licensed under the 2-clause BSD license.  See `LICENSE.txt` for
 further details.

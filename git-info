@@ -8,7 +8,7 @@
 #     $ git info some/relative/file_or_directory
 #     $ git info ~/repos/something.git
 #
-# Copyright (c) 2009-2021 Akinori MUSHA
+# Copyright (c) 2009-2022 Akinori MUSHA
 #
 # All rights reserved.
 #
