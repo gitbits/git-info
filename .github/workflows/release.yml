@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check release asset
+        run: |
+          test -x git-info
+          sh -n git-info
+
+      - name: Package release
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          package_dir=$(mktemp -d "$RUNNER_TEMP/package.XXXXXX")
+          mkdir -p "$package_dir/bin"
+          install -m 755 git-info "$package_dir/bin/git-info"
+          cp LICENSE.txt "$package_dir/LICENSE.txt"
+          tar -czf "$RUNNER_TEMP/git-info-${TAG#v}.tar.gz" -C "$package_dir" bin LICENSE.txt
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" "$RUNNER_TEMP/git-info-${TAG#v}.tar.gz" --verify-tag --generate-notes

@@ -9,6 +9,12 @@ Synopsis
 How to set up
 -------------
 
+Install with [mise](https://mise.jdx.dev/):
+
+```sh
+mise use -g github:gitbits/git-info@latest
+```
+
 Just place these scripts in one of the directories in your `PATH`, and
 you are done.
 
